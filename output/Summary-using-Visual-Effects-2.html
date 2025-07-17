@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Infrastructure Architecture</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .architecture-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        
+        .info-card p {
+            margin: 0;
+            color: #34495e;
+            font-weight: 500;
+        }
+        
+        .diagram-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .vpc-container {
+            border: 3px solid #FF6B35;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            position: relative;
+        }
+        
+        .vpc-title {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #FF6B35;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .az-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .availability-zone {
+            border: 2px solid #00b894;
+            border-radius: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+            position: relative;
+        }
+        
+        .az-title {
+            position: absolute;
+            top: -12px;
+            left: 15px;
+            background: #00b894;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .subnet {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .subnet-title {
+            font-weight: bold;
+            color: #1976D2;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .ec2-instance {
+            background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+            font-size: 11px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+        
+        .ec2-instance:hover {
+            transform: scale(1.05);
+            cursor: pointer;
+        }
+        
+        .security-group {
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            margin: 3px 0;
+            font-size: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .external-services {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .s3-bucket {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .vpc-legend { background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%); }
+        .az-legend { background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%); }
+        .subnet-legend { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); }
+        .ec2-legend { background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%); }
+        .s3-legend { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+        .sg-legend { background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%); }
+        
+        @media (max-width: 768px) {
+            .az-grid {
+                grid-template-columns: 1fr;
+            }
+            .architecture-info {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ AWS Infrastructure Architecture</h1>
+            <p style="color: #7f8c8d; font-size: 1.1em;">Imported from tfstate files in /Users/Irfan_Ilyas/aws</p>
+        </div>
+        
+        <div class="architecture-info">
+            <div class="info-card">
+                <h3>🔧 Total Resources</h3>
+                <p>17 Components</p>
+            </div>
+            <div class="info-card">
+                <h3>🖥️ EC2 Instances</h3>
+                <p>3 Instances</p>
+            </div>
+            <div class="info-card">
+                <h3>🌐 VPC & Networking</h3>
+                <p>1 VPC, 6 Subnets</p>
+            </div>
+            <div class="info-card">
+                <h3>🔒 Security Groups</h3>
+                <p>3 Groups</p>
+            </div>
+            <div class="info-card">
+                <h3>📦 Storage</h3>
+                <p>1 S3 Bucket</p>
+            </div>
+            <div class="info-card">
+                <h3>🌍 Region</h3>
+                <p>us-east-1</p>
+            </div>
+        </div>
+        
+        <div class="diagram-container">
+            <div class="vpc-container">
+                <div class="vpc-title">VPC: epamdefaultvpc (172.31.0.0/16)</div>
+                
+                <div class="az-grid">
+                    <!-- US-East-1a -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1a</div>
+                        
+                        <div class="subnet">
+                            <div class="subnet-title">📡 epam-subnet (172.31.96.0/20)</div>
+                            <div class="ec2-instance tooltip" data-tooltip="Instance Type: t2.micro, AMI: ami-0c02fb55956c7d316">
+                                🖥️ infradriftExampleEC2<br>
+                                <small>i-05da575ea0380a484</small>
+                            </div>
+                            <div class="ec2-instance tooltip" data-tooltip="Instance Type: t2.micro, AMI: ami-0c02fb55956c7d316">
+                                🖥️ newExampleEC2<br>
+                                <small>i-0e49baeaa9def42a6</small>
+                            </div>
+                            <div class="security-group">🔒 infradrift_security_group</div>
+                        </div>
+                        
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default6 (172.31.0.0/20)</div>
+                            <div class="ec2-instance tooltip" data-tooltip="Instance Type: t3.micro, AMI: ami-05ffe3c48a9991133">
+                                🖥️ infradrift_instance<br>
+                                <small>i-04a7597d0795c8afa</small>
+                            </div>
+                            <div class="security-group">🔒 launch-wizard-1</div>
+                        </div>
+                    </div>
+                    
+                    <!-- US-East-1b -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1b</div>
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default1 (172.31.80.0/20)</div>
+                            <div style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                                No active instances
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- US-East-1c -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1c</div>
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default5 (172.31.16.0/20)</div>
+                            <div style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                                No active instances
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- US-East-1d -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1d</div>
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default3 (172.31.32.0/20)</div>
+                            <div style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                                No active instances
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- US-East-1e -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1e</div>
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default4 (172.31.48.0/20)</div>
+                            <div style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                                No active instances
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- US-East-1f -->
+                    <div class="availability-zone">
+                        <div class="az-title">us-east-1f</div>
+                        <div class="subnet">
+                            <div class="subnet-title">📡 default2 (172.31.64.0/20)</div>
+                            <div style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                                No active instances
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 10px;">
+                    <strong>🔒 Security Groups:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <div class="security-group">default (sg-001d905ff5bdc55e3)</div>
+                        <div class="security-group">infradrift_security_group (SSH:22, SMTP:25)</div>
+                        <div class="security-group">launch-wizard-1 (SSH:22)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="external-services">
+                <h3 style="margin-top: 0; color: white;">☁️ External AWS Services</h3>
+                <div class="s3-bucket tooltip" data-tooltip="Bucket for billing reports with encryption enabled">
+                    📦 S3 Bucket: tf-up-and-running-state-20240924<br>
+                    <small>Region: us-east-1 | Encryption: AES256 | Policy: Billing Reports</small>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <h4 style="width: 100%; margin: 0 0 15px 0; color: #2c3e50;">📋 Legend</h4>
+                <div class="legend-item">
+                    <div class="legend-color vpc-legend"></div>
+                    <span>VPC</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color az-legend"></div>
+                    <span>Availability Zone</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color subnet-legend"></div>
+                    <span>Subnet</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color ec2-legend"></div>
+                    <span>EC2 Instance</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color sg-legend"></div>
+                    <span>Security Group</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color s3-legend"></div>
+                    <span>S3 Bucket</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border-radius: 15px; color: white;">
+            <h3 style="margin-top: 0;">📊 Infrastructure Summary</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <strong>🏗️ Architecture:</strong><br>
+                    Multi-AZ deployment across 6 availability zones
+                </div>
+                <div>
+                    <strong>🔧 Compute:</strong><br>
+                    3 EC2 instances (2x t2.micro, 1x t3.micro)
+                </div>
+                <div>
+                    <strong>🌐 Network:</strong><br>
+                    1 VPC with 6 public subnets
+                </div>
+                <div>
+                    <strong>🔒 Security:</strong><br>
+                    3 security groups with SSH/SMTP access
+                </div>
+                <div>
+                    <strong>💾 Storage:</strong><br>
+                    S3 bucket with billing reports integration
+                </div>
+                <div>
+                    <strong>📍 Location:</strong><br>
+                    AWS US-East-1 region
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

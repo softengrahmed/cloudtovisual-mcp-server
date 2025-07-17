@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Architecture Diagram - US-East-1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #232F3E 0%, #FF9900 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .region-container {
+            background: #f8f9fa;
+            margin: 30px;
+            border-radius: 15px;
+            border: 3px dashed #FF9900;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .region-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #FF9900;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(255,153,0,0.3);
+        }
+        
+        .vpc-container {
+            background: linear-gradient(145deg, #e3f2fd, #f3e5f5);
+            border: 3px solid #2196F3;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(33,150,243,0.2);
+        }
+        
+        .vpc-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(33,150,243,0.3);
+        }
+        
+        .vpc-info {
+            background: rgba(33,150,243,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 5px solid #2196F3;
+        }
+        
+        .subnets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .subnet {
+            background: linear-gradient(145deg, #e8f5e8, #f0f8f0);
+            border: 2px solid #4CAF50;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(76,175,80,0.2);
+        }
+        
+        .subnet:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(76,175,80,0.3);
+        }
+        
+        .subnet-header {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .subnet-detail {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .subnet-detail label {
+            font-weight: bold;
+            color: #2E7D32;
+        }
+        
+        .subnet-detail span {
+            background: rgba(76,175,80,0.2);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .az-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 3px 10px rgba(255,107,107,0.3);
+        }
+        
+        .ec2-instances {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed #4CAF50;
+        }
+        
+        .ec2-instance {
+            background: linear-gradient(145deg, #fff3e0, #fce4ec);
+            border: 1px solid #FF5722;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(255,87,34,0.2);
+        }
+        
+        .ec2-instance:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(255,87,34,0.3);
+        }
+        
+        .ec2-header {
+            font-weight: bold;
+            color: #D84315;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .instance-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #9C27B0, #E91E63);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            margin-left: auto;
+        }
+        
+        .ec2-detail {
+            font-size: 0.85em;
+            margin: 3px 0;
+            color: #424242;
+        }
+        
+        .security-groups-section {
+            background: linear-gradient(145deg, #f3e5f5, #e8eaf6);
+            border: 3px solid #9C27B0;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(156,39,176,0.2);
+        }
+        
+        .sg-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #9C27B0;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(156,39,176,0.3);
+        }
+        
+        .sg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .security-group {
+            background: linear-gradient(145deg, #f8bbd9, #e1bee7);
+            border: 2px solid #8E24AA;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(142,36,170,0.2);
+        }
+        
+        .security-group:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(142,36,170,0.3);
+        }
+        
+        .sg-header {
+            background: #8E24AA;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .sg-rules {
+            margin-top: 15px;
+        }
+        
+        .sg-rule {
+            background: rgba(142,36,170,0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            border-left: 4px solid #8E24AA;
+        }
+        
+        .rule-type {
+            font-weight: bold;
+            color: #4A148C;
+            margin-bottom: 5px;
+        }
+        
+        .rule-detail {
+            font-size: 0.9em;
+            color: #6A1B9A;
+        }
+        
+        .s3-section {
+            background: linear-gradient(145deg, #fff3e0, #fce4ec);
+            border: 3px solid #FF5722;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(255,87,34,0.2);
+        }
+        
+        .s3-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #FF5722;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(255,87,34,0.3);
+        }
+        
+        .s3-bucket {
+            background: linear-gradient(145deg, #ffebee, #fff8e1);
+            border: 2px solid #FF7043;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255,112,67,0.2);
+        }
+        
+        .s3-bucket:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,112,67,0.3);
+        }
+        
+        .s3-bucket-name {
+            font-weight: bold;
+            color: #D84315;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .s3-detail {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        
+        .feature-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #9C27B0, #E91E63);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin: 2px;
+            box-shadow: 0 2px 6px rgba(156,39,176,0.3);
+        }
+        
+        .stats-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            margin: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(102,126,234,0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stopped-badge {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .subnet, .security-group, .s3-bucket, .stat-card {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .subnet:nth-child(odd) { animation-delay: 0.1s; }
+        .subnet:nth-child(even) { animation-delay: 0.2s; }
+        .security-group:nth-child(odd) { animation-delay: 0.3s; }
+        .security-group:nth-child(even) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ AWS Infrastructure Architecture</h1>
+            <p>Complete infrastructure view from imported resources in US-East-1 region</p>
+        </div>
+        
+        <div class="stats-summary">
+            <h2>📊 Infrastructure Summary</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">VPC</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">Subnets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Security Groups</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">EC2 Instances</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Availability Zones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">S3 Resources</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="region-container">
+            <div class="region-label">🌍 US-East-1 Region</div>
+            
+            <div class="vpc-container">
+                <div class="vpc-label">🏢 VPC</div>
+                <div class="vpc-info">
+                    <h3>epamdefaultvpc (vpc-099f3b948b425dab3)</h3>
+                    <p><strong>CIDR Block:</strong> 172.31.0.0/16</p>
+                    <p><strong>DNS Support:</strong> ✅ Enabled | <strong>DNS Hostnames:</strong> ✅ Enabled</p>
+                    <p><strong>Tenancy:</strong> Default | <strong>State:</strong> Available</p>
+                </div>
+                
+                <h3 style="margin: 25px 0 15px 0; color: #2E7D32;">🌐 Public Subnets with EC2 Instances</h3>
+                <div class="subnets-grid">
+                    <div class="subnet">
+                        <div class="subnet-header">epam-subnet (dev environment)</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-009aa7b3b70a541e0</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.96.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1a</div>
+                        
+                        <div class="ec2-instances">
+                            <div class="ec2-instance">
+                                <div class="ec2-header">
+                                    💻 infradriftExampleEC2
+                                    <span class="stopped-badge">STOPPED</span>
+                                </div>
+                                <div class="ec2-detail"><strong>Instance:</strong> i-05da575ea0380a484 (t2.micro)</div>
+                                <div class="ec2-detail"><strong>Private IP:</strong> 172.31.110.128</div>
+                                <div class="ec2-detail"><strong>Security Group:</strong> infradrift_security_group</div>
+                                <div class="ec2-detail"><strong>AMI:</strong> ami-0c02fb55956c7d316</div>
+                            </div>
+                            
+                            <div class="ec2-instance">
+                                <div class="ec2-header">
+                                    💻 newExampleEC2
+                                    <span class="stopped-badge">STOPPED</span>
+                                </div>
+                                <div class="ec2-detail"><strong>Instance:</strong> i-0e49baeaa9def42a6 (t2.micro)</div>
+                                <div class="ec2-detail"><strong>Private IP:</strong> 172.31.102.215</div>
+                                <div class="ec2-detail"><strong>Security Group:</strong> infradrift_security_group</div>
+                                <div class="ec2-detail"><strong>AMI:</strong> ami-0c02fb55956c7d316</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default6</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-0a82eff84472aacca</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.0.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1a</div>
+                        
+                        <div class="ec2-instances">
+                            <div class="ec2-instance">
+                                <div class="ec2-header">
+                                    💻 infradrift_instance
+                                    <span class="stopped-badge">STOPPED</span>
+                                </div>
+                                <div class="ec2-detail"><strong>Instance:</strong> i-04a7597d0795c8afa (t3.micro)</div>
+                                <div class="ec2-detail"><strong>Private IP:</strong> 172.31.4.156</div>
+                                <div class="ec2-detail"><strong>Security Group:</strong> launch-wizard-1</div>
+                                <div class="ec2-detail"><strong>Key Pair:</strong> epam-default-kp</div>
+                                <div class="ec2-detail"><strong>AMI:</strong> ami-05ffe3c48a9991133</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default1</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-00e37f75e6898b70d</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.80.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1b</div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default5</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-0157df32d1f60fe36</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.16.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1c</div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default3</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-027c8b03887bf0914</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.32.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1d</div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default4</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-0dc2761b5d958bf46</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.48.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1e</div>
+                    </div>
+                    
+                    <div class="subnet">
+                        <div class="subnet-header">default2</div>
+                        <div class="subnet-detail">
+                            <label>Subnet ID:</label>
+                            <span>subnet-09bccaf39b903d88a</span>
+                        </div>
+                        <div class="subnet-detail">
+                            <label>CIDR:</label>
+                            <span>172.31.64.0/20</span>
+                        </div>
+                        <div class="az-badge">📍 us-east-1f</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="security-groups-section">
+                <div class="sg-label">🛡️ Security Groups</div>
+                
+                <div class="sg-grid">
+                    <div class="security-group">
+                        <div class="sg-header">🔒 infradrift_security_group</div>
+                        <div><strong>ID:</strong> sg-0ad776bb56a0fd35d</div>
+                        <div><strong>Description:</strong> Security group allowing SSH access</div>
+                        <div class="sg-rules">
+                            <div class="rule-type">🔽 Inbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">SSH (22) from 0.0.0.0/0 - Allow SSH from any IP</div>
+                            </div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">SMTP (25) from 0.0.0.0/0 - Allow SMTP from any IP</div>
+                            </div>
+                            <div class="rule-type">🔼 Outbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">All Traffic (-1) to 0.0.0.0/0 - Allow all outbound traffic</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="security-group">
+                        <div class="sg-header">🚀 launch-wizard-1</div>
+                        <div><strong>ID:</strong> sg-00dd8bdf3a009f52c</div>
+                        <div><strong>Description:</strong> launch-wizard-1 created 2025-07-11T19:40:18.810Z</div>
+                        <div class="sg-rules">
+                            <div class="rule-type">🔽 Inbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">SSH (22) from 0.0.0.0/0</div>
+                            </div>
+                            <div class="rule-type">🔼 Outbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">All Traffic (-1) to 0.0.0.0/0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="security-group">
+                        <div class="sg-header">🏠 default</div>
+                        <div><strong>ID:</strong> sg-001d905ff5bdc55e3</div>
+                        <div><strong>Description:</strong> default VPC security group</div>
+                        <div class="sg-rules">
+                            <div class="rule-type">🔽 Inbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">All Traffic (-1) from self - Allow traffic from same security group</div>
+                            </div>
+                            <div class="rule-type">🔼 Outbound Rules:</div>
+                            <div class="sg-rule">
+                                <div class="rule-detail">All Traffic (-1) to 0.0.0.0/0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="s3-section">
+                <div class="s3-label">🪣 S3 Storage</div>
+                
+                <div class="s3-bucket">
+                    <div class="s3-bucket-name">📦 tf-up-and-running-state-20240924</div>
+                    <div class="s3-detail"><strong>Region:</strong> us-east-1</div>
+                    <div class="s3-detail"><strong>ACL:</strong> Private</div>
+                    <div class="s3-detail"><strong>Versioning:</strong> Disabled</div>
+                    <div class="s3-detail"><strong>Purpose:</strong> AWS Billing Reports Storage</div>
+                    <div style="margin-top: 10px;">
+                        <span class="feature-badge">🔒 AES256 Encryption</span>
+                        <span class="feature-badge">📋 Bucket Policy</span>
+                        <span class="feature-badge">💰 Billing Reports</span>
+                    </div>
+                </div>
+                
+                <div class="s3-bucket">
+                    <div class="s3-bucket-name">📋 S3 Bucket Policy</div>
+                    <div class="s3-detail"><strong>Purpose:</strong> Allow AWS Billing Reports Service Access</div>
+                    <div class="s3-detail"><strong>Permissions:</strong> GetBucketAcl, GetBucketPolicy, PutObject</div>
+                    <div class="s3-detail"><strong>Principal:</strong> billingreports.amazonaws.com</div>
+                    <div style="margin-top: 10px;">
+                        <span class="feature-badge">🔑 Service Access</span>
+                        <span class="feature-badge">📊 Cost & Usage Reports</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,183 @@
+graph TB
+    %% AWS Account and Infrastructure Overview
+    subgraph AWS["🌐 AWS Account: 637423563862"]
+        subgraph GLOBAL["🌍 Global Services"]
+            subgraph IAM["👥 Identity & Access Management"]
+                %% IAM Users
+                USER1["👤 tfuser<br/>Admin Access<br/>ID: AIDAZI2LHWRLONKAIFHJZ"]
+                USER2["👤 ec2user<br/>EC2 ReadOnly + ECR<br/>ID: AIDAZI2LHWRLJJXXSTLQC"]
+                USER3["👤 s3wuser<br/>S3 Writer<br/>ID: AIDAZI2LHWRLGKJ4VQ2HV"]
+                
+                %% IAM Groups
+                GROUP1["👥 adminuser<br/>Administrator Access<br/>ID: AGPAZI2LHWRLBLHLRZITY"]
+                GROUP2["👥 s3WriterGroup<br/>S3 Full Access<br/>ID: AGPAZI2LHWRLHKWGDH2JN"]
+                
+                %% Custom IAM Policies
+                POLICY1["📋 epamdefault<br/>S3 Read/List Policy<br/>ARN: ...policy/epamdefault"]
+                POLICY2["📋 ec2Policies<br/>EC2 Describe Policy<br/>ARN: ...policy/ec2Policies"]
+                
+                %% AWS Service Roles
+                ROLE1["🔐 AWSServiceRoleForAutoScaling<br/>Used: 2024-04-22"]
+                ROLE2["🔐 AWSServiceRoleForElasticLoadBalancing<br/>Used: 2024-04-22"]
+                ROLE3["🔐 AWSServiceRoleForEc2InstanceConnect<br/>Used: 2024-04-23"]
+                ROLE4["🔐 AWSServiceRoleForTrustedAdvisor<br/>Never Used"]
+                ROLE5["🔐 AWSServiceRoleForSupport<br/>Never Used"]
+                ROLE6["🔐 AWSServiceRoleForSSO<br/>Never Used"]
+                ROLE7["🔐 AWSServiceRoleForAmazonQDeveloper<br/>Never Used"]
+                
+                %% Access Keys
+                KEY1["🔑 AKIAZI2LHWRLDWNNGMZK<br/>Active (tfuser)<br/>Created: 2025-07-01"]
+                KEY2["🔑 AKIAZI2LHWRLFMHSOWGL<br/>Inactive (s3wuser)<br/>Created: 2025-06-25"]
+                KEY3["🔑 AKIAZI2LHWRLBDWMDLGG<br/>Inactive (s3wuser)<br/>Created: 2025-05-10"]
+            end
+            
+            subgraph CF["🌐 CloudFront Cache Policies"]
+                CACHE1["⚡ Managed-CachingOptimized<br/>86400s default TTL"]
+                CACHE2["⚡ Managed-CachingDisabled<br/>0s TTL"]
+                CACHE3["⚡ Managed-Amplify<br/>2s TTL"]
+                CACHE4["⚡ Managed-Amplify-Default<br/>Dynamic TTL"]
+                CACHE5["⚡ Managed-Amplify-StaticContent<br/>Static Content"]
+                CACHE6["⚡ Managed-Amplify-ImageOptimization<br/>Image Processing"]
+                CACHE7["⚡ UseOriginCacheControlHeaders<br/>Origin-based"]
+                CACHE_MORE["⚡ ... 10 more cache policies"]
+            end
+            
+            subgraph S3_GLOBAL["🪣 S3 Storage"]
+                S3_BUCKET["🗂️ tf-up-and-running-state-20240924<br/>Billing Reports Bucket<br/>AES256 Encrypted<br/>us-east-1"]
+                S3_POLICY["📜 Bucket Policy<br/>Service: billingreports.amazonaws.com<br/>Account: 637423563862"]
+            end
+        end
+        
+        subgraph USEAST1["🏢 US East 1 (N. Virginia)"]
+            subgraph NETWORK["🏗️ Network Infrastructure"]
+                VPC["🏢 VPC<br/>vpc-099f3b948b425dab3<br/>epamdefaultvpc<br/>172.31.0.0/16<br/>DNS Enabled"]
+                
+                %% Subnets in different AZs
+                SUBNET1["🔗 subnet-009aa7b3b70a541e0<br/>epam-subnet (dev)<br/>us-east-1a<br/>172.31.96.0/20<br/>Public IP: Yes"]
+                SUBNET2["🔗 subnet-00e37f75e6898b70d<br/>default1<br/>us-east-1b<br/>172.31.80.0/20<br/>Public IP: Yes"]
+                SUBNET3["🔗 subnet-0157df32d1f60fe36<br/>default5<br/>us-east-1c<br/>172.31.16.0/20<br/>Public IP: Yes"]
+                SUBNET4["🔗 subnet-027c8b03887bf0914<br/>default3<br/>us-east-1d<br/>172.31.32.0/20<br/>Public IP: Yes"]
+                SUBNET5["🔗 subnet-09bccaf39b903d88a<br/>default2<br/>us-east-1f<br/>172.31.64.0/20<br/>Public IP: Yes"]
+                SUBNET6["🔗 subnet-0a82eff84472aacca<br/>default6<br/>us-east-1a<br/>172.31.0.0/20<br/>Public IP: Yes"]
+                SUBNET7["🔗 subnet-0dc2761b5d958bf46<br/>default4<br/>us-east-1e<br/>172.31.48.0/20<br/>Public IP: Yes"]
+            end
+            
+            subgraph SECURITY["🔒 Security Groups"]
+                SG1["🛡️ sg-001d905ff5bdc55e3<br/>default<br/>Ingress: Self (All Ports)<br/>Egress: All Traffic"]
+                SG2["🛡️ sg-0ad776bb56a0fd35d<br/>infradrift_security_group<br/>Ingress: SSH(22), SMTP(25)<br/>Egress: All Traffic"]
+                SG3["🛡️ sg-00dd8bdf3a009f52c<br/>launch-wizard-1<br/>Ingress: SSH(22)<br/>Egress: All Traffic<br/>Created: 2025-07-11"]
+            end
+            
+            subgraph COMPUTE["🖥️ Compute Resources"]
+                EC2_1["🖥️ i-04a7597d0795c8afa<br/>infradrift_instance<br/>t3.micro (STOPPED)<br/>Private IP: 172.31.4.156<br/>Key: epam-default-kp<br/>AMI: ami-05ffe3c48a9991133<br/>AZ: us-east-1a"]
+                EC2_2["🖥️ i-05da575ea0380a484<br/>infradriftExampleEC2<br/>t2.micro (STOPPED)<br/>Private IP: 172.31.110.128<br/>No Key Pair<br/>AMI: ami-0c02fb55956c7d316<br/>AZ: us-east-1a"]
+                EC2_3["🖥️ i-0e49baeaa9def42a6<br/>newExampleEC2<br/>t2.micro (STOPPED)<br/>Private IP: 172.31.102.215<br/>No Key Pair<br/>AMI: ami-0c02fb55956c7d316<br/>AZ: us-east-1a"]
+            end
+            
+            subgraph STORAGE["💾 EBS Storage"]
+                EBS1["💾 vol-0c7af739e1d4fcbb5<br/>gp3 8GB<br/>IOPS: 3000<br/>Throughput: 125 MB/s<br/>Attached to: infradrift_instance"]
+                EBS2["💾 vol-05c109cbbd1a9fde5<br/>gp2 8GB<br/>IOPS: 100<br/>Attached to: infradriftExampleEC2"]
+                EBS3["💾 vol-088e9d0dc0c9c6711<br/>gp2 8GB<br/>IOPS: 100<br/>Attached to: newExampleEC2"]
+            end
+        end
+    end
+    
+    %% Network Relationships
+    VPC --> SUBNET1
+    VPC --> SUBNET2
+    VPC --> SUBNET3
+    VPC --> SUBNET4
+    VPC --> SUBNET5
+    VPC --> SUBNET6
+    VPC --> SUBNET7
+    
+    %% EC2 Instance Relationships
+    EC2_1 --> SUBNET6
+    EC2_2 --> SUBNET1
+    EC2_3 --> SUBNET1
+    
+    %% Security Group Relationships
+    EC2_1 --> SG3
+    EC2_2 --> SG2
+    EC2_3 --> SG2
+    
+    %% Storage Relationships
+    EC2_1 --> EBS1
+    EC2_2 --> EBS2
+    EC2_3 --> EBS3
+    
+    %% IAM User Relationships
+    USER1 --> KEY1
+    USER3 --> KEY2
+    USER3 --> KEY3
+    USER3 --> GROUP2
+    
+    %% Policy Attachments - Users
+    USER1 --> POLICY2
+    USER2 --> POLICY1
+    USER3 --> POLICY2
+    
+    %% AWS Managed Policies (shown as dotted lines)
+    USER1 -.->|AdministratorAccess| AWS_ADMIN["📋 AWS Managed Policy<br/>AdministratorAccess"]
+    USER2 -.->|AmazonEC2ReadOnlyAccess| AWS_EC2_RO["📋 AWS Managed Policy<br/>AmazonEC2ReadOnlyAccess"]
+    USER2 -.->|AmazonEC2ContainerRegistryPullOnly| AWS_ECR["📋 AWS Managed Policy<br/>ECR PullOnly"]
+    
+    %% Group Policy Attachments
+    GROUP1 -.->|AdministratorAccess| AWS_ADMIN
+    GROUP2 -.->|AmazonS3FullAccess| AWS_S3["📋 AWS Managed Policy<br/>AmazonS3FullAccess"]
+    
+    %% S3 Relationships
+    S3_BUCKET --> S3_POLICY
+    
+    %% Service Role Usage (shown as dotted lines)
+    ROLE1 -.->|Auto Scaling| COMPUTE
+    ROLE2 -.->|Load Balancing| COMPUTE
+    ROLE3 -.->|Instance Connect| EC2_1
+    
+    %% Availability Zone Information
+    AZ1["🏗️ us-east-1a<br/>3 subnets, 3 instances"]
+    AZ2["🏗️ us-east-1b<br/>1 subnet"]
+    AZ3["🏗️ us-east-1c<br/>1 subnet"]
+    AZ4["🏗️ us-east-1d<br/>1 subnet"]
+    AZ5["🏗️ us-east-1e<br/>1 subnet"]
+    AZ6["🏗️ us-east-1f<br/>1 subnet"]
+    
+    SUBNET1 --> AZ1
+    SUBNET6 --> AZ1
+    SUBNET2 --> AZ2
+    SUBNET3 --> AZ3
+    SUBNET4 --> AZ4
+    SUBNET7 --> AZ5
+    SUBNET5 --> AZ6
+    
+    %% Styling for different resource types
+    classDef userStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef groupStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef policyStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef roleStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef keyStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef s3Style fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef cfStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
+    classDef vpcStyle fill:#fff8e1,stroke:#ff8f00,stroke-width:2px,color:#000
+    classDef subnetStyle fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px,color:#000
+    classDef sgStyle fill:#ffebee,stroke:#f44336,stroke-width:2px,color:#000
+    classDef ec2Style fill:#e0f2f1,stroke:#4caf50,stroke-width:2px,color:#000
+    classDef ebsStyle fill:#f1f8e9,stroke:#8bc34a,stroke-width:2px,color:#000
+    classDef azStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#000
+    classDef awsStyle fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#000
+    
+    %% Apply styles
+    class USER1,USER2,USER3 userStyle
+    class GROUP1,GROUP2 groupStyle
+    class POLICY1,POLICY2 policyStyle
+    class ROLE1,ROLE2,ROLE3,ROLE4,ROLE5,ROLE6,ROLE7 roleStyle
+    class KEY1,KEY2,KEY3 keyStyle
+    class S3_BUCKET,S3_POLICY s3Style
+    class CACHE1,CACHE2,CACHE3,CACHE4,CACHE5,CACHE6,CACHE7,CACHE_MORE cfStyle
+    class VPC vpcStyle
+    class SUBNET1,SUBNET2,SUBNET3,SUBNET4,SUBNET5,SUBNET6,SUBNET7 subnetStyle
+    class SG1,SG2,SG3 sgStyle
+    class EC2_1,EC2_2,EC2_3 ec2Style
+    class EBS1,EBS2,EBS3 ebsStyle
+    class AZ1,AZ2,AZ3,AZ4,AZ5,AZ6 azStyle
+    class AWS_ADMIN,AWS_EC2_RO,AWS_ECR,AWS_S3 awsStyle

@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Mermaid Diagram Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
+        .file-input-label {
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .file-input-label:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .btn.success {
+            background: #27ae60;
+        }
+
+        .btn.success:hover {
+            background: #219a52;
+        }
+
+        .btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .diagram-container {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diagram-toolbar {
+            background: rgba(52, 73, 94, 0.05);
+            padding: 15px;
+            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .zoom-btn {
+            background: #34495e;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .zoom-btn:hover {
+            background: #2c3e50;
+            transform: scale(1.1);
+        }
+
+        .zoom-level {
+            background: rgba(52, 73, 94, 0.1);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .diagram-content {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            cursor: grab;
+        }
+
+        .diagram-content:active {
+            cursor: grabbing;
+        }
+
+        .diagram-content.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2000;
+            background: white;
+            border-radius: 0;
+        }
+
+        #diagram {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .info-panel {
+            background: rgba(52, 73, 94, 0.05);
+            padding: 10px 15px;
+            border-top: 1px solid rgba(52, 73, 94, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .drop-zone {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            z-index: 10;
+        }
+
+        .drop-zone.drag-over {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .drop-zone-box {
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone-box.drag-over {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .theme-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .theme-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .theme-btn.active {
+            background: #3498db;
+        }
+
+        .syntax-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            font-size: 0.85em;
+            max-width: 300px;
+            z-index: 100;
+            display: none;
+        }
+
+        .syntax-panel.show {
+            display: block;
+        }
+
+        .syntax-panel h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .syntax-example {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            margin: 5px 0;
+            border-left: 3px solid #3498db;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px 20px;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .diagram-container {
+                top: 140px;
+                margin: 10px;
+            }
+
+            .diagram-toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .syntax-panel {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin: 10px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Interactive Mermaid Diagram Viewer</h1>
+        <div class="file-input-container">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".mmd,.txt,.md" />
+                <label for="fileInput" class="file-input-label">
+                    📂 Open MMD File
+                </label>
+            </div>
+            <div class="file-info" id="fileInfo">
+                No file loaded
+            </div>
+        </div>
+        <div class="controls">
+            <button class="btn" onclick="resetView()">
+                🔄 Reset View
+            </button>
+            <button class="btn success" onclick="exportDiagram()" id="exportBtn" disabled>
+                📄 Export PNG
+            </button>
+            <button class="btn" onclick="toggleFullscreen()" id="fullscreenBtn" disabled>
+                🔍 Fullscreen
+            </button>
+            <button class="btn" onclick="toggleSyntaxHelp()">
+                📖 Syntax Help
+            </button>
+            <button class="btn danger" onclick="showInfo()">
+                ℹ️ Info
+            </button>
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-toolbar">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomOut()" disabled id="zoomOutBtn">−</button>
+                <div class="zoom-level" id="zoomLevel">100%</div>
+                <button class="zoom-btn" onclick="zoomIn()" disabled id="zoomInBtn">+</button>
+            </div>
+            <div class="theme-controls">
+                <span style="font-size: 0.9em; color: #7f8c8d; margin-right: 10px;">Theme:</span>
+                <button class="theme-btn active" onclick="setTheme('default')" data-theme="default">Default</button>
+                <button class="theme-btn" onclick="setTheme('dark')" data-theme="dark">Dark</button>
+                <button class="theme-btn" onclick="setTheme('forest')" data-theme="forest">Forest</button>
+                <button class="theme-btn" onclick="setTheme('neutral')" data-theme="neutral">Neutral</button>
+            </div>
+            <div style="font-size: 0.9em; color: #7f8c8d;">
+                💡 Click and drag to pan • Scroll to zoom • Double-click to reset
+            </div>
+        </div>
+
+        <div class="diagram-content" id="diagramContent">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-box" id="dropZoneBox">
+                    <div style="font-size: 3em; margin-bottom: 20px;">📁</div>
+                    <div style="font-size: 1.5em; margin-bottom: 10px; font-weight: 600;">Drop your .mmd file here</div>
+                    <div>or click "Open MMD File" to browse</div>
+                    <div style="margin-top: 20px; font-size: 0.9em; color: #95a5a6;">
+                        Supports: .mmd, .txt, .md files with Mermaid syntax
+                    </div>
+                </div>
+            </div>
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <div style="color: #7f8c8d; font-weight: 600;">Loading diagram...</div>
+            </div>
+            <div id="diagram"></div>
+        </div>
+
+        <div class="info-panel">
+            <div id="diagramInfo">
+                Ready to load Mermaid diagram
+            </div>
+            <div>
+                Interactive Mermaid Viewer v1.0
+            </div>
+        </div>
+    </div>
+
+    <div class="syntax-panel" id="syntaxPanel">
+        <h3>📖 Mermaid Syntax Quick Reference</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>Flowchart:</strong>
+            <div class="syntax-example">graph TD<br/>    A[Start] --> B{Decision}<br/>    B -->|Yes| C[Action]<br/>    B -->|No| D[End]</div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>Sequence Diagram:</strong>
+            <div class="syntax-example">sequenceDiagram<br/>    Alice->>Bob: Hello<br/>    Bob-->>Alice: Hi there!</div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>Gantt Chart:</strong>
+            <div class="syntax-example">gantt<br/>    title Project Timeline<br/>    dateFormat YYYY-MM-DD<br/>    section Tasks<br/>    Task 1 :2024-01-01, 3d</div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>Class Diagram:</strong>
+            <div class="syntax-example">classDiagram<br/>    Animal <|-- Duck<br/>    Animal : +int age<br/>    class Duck{<br/>      +swim()<br/>    }</div>
+        </div>
+
+        <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 15px;">
+            💡 Visit <a href="https://mermaid.js.org/" target="_blank">mermaid.js.org</a> for complete documentation
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Initialize Mermaid with default configuration
+        let currentTheme = 'default';
+        
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#3498db',
+                primaryTextColor: '#2c3e50',
+                primaryBorderColor: '#3498db',
+                lineColor: '#7f8c8d',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8f9fa',
+                tertiaryColor: '#ecf0f1'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: false,
+                wrap: true
+            },
+            gantt: {
+                useMaxWidth: false
+            },
+            securityLevel: 'loose'
+        });
+
+        // Variables
+        let currentZoom = 1;
+        let isFullscreen = false;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+        let currentDiagram = null;
+        let currentFileName = '';
+
+        // File handling
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneBox = document.getElementById('dropZoneBox');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZoneBox.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZoneBox.addEventListener(eventName, handleDragEnter, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZoneBox.addEventListener(eventName, handleDragLeave, false);
+        });
+
+        dropZoneBox.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragEnter(e) {
+            dropZoneBox.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            dropZoneBox.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            
+            // Check file type
+            const validExtensions = ['.mmd', '.txt', '.md'];
+            const fileName = file.name.toLowerCase();
+            const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+            
+            if (!isValid) {
+                showToast('❌ Please select a .mmd, .txt, or .md file', 'error');
+                return;
+            }
+
+            currentFileName = file.name;
+            document.getElementById('fileInfo').textContent = `📄 ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                loadDiagram(content);
+            };
+            reader.readAsText(file);
+        }
+
+        async function loadDiagram(diagramDefinition) {
+            const loading = document.getElementById('loading');
+            const diagramElement = document.getElementById('diagram');
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            
+            try {
+                // Clear previous diagram
+                diagramElement.innerHTML = '';
+                
+                // Validate and clean the diagram definition
+                const cleanDefinition = cleanDiagramDefinition(diagramDefinition);
+                
+                // Generate unique ID for this diagram
+                const diagramId = 'mermaid-diagram-' + Date.now();
+                
+                // Render the diagram
+                const { svg } = await mermaid.render(diagramId, cleanDefinition);
+                diagramElement.innerHTML = svg;
+                
+                currentDiagram = cleanDefinition;
+                
+                // Hide loading
+                loading.classList.add('hidden');
+                
+                // Enable controls
+                enableControls();
+                
+                // Setup interactions
+                setupInteractions();
+                
+                // Update info panel
+                updateDiagramInfo(cleanDefinition);
+                
+                showToast('✅ Diagram loaded successfully!');
+                
+            } catch (error) {
+                console.error('Error rendering diagram:', error);
+                loading.classList.add('hidden');
+                dropZone.classList.remove('hidden');
+                
+                const errorMsg = getErrorMessage(error);
+                showToast(`❌ ${errorMsg}`, 'error');
+                
+                // Show syntax help
+                document.getElementById('syntaxPanel').classList.add('show');
+            }
+        }
+
+        function cleanDiagramDefinition(definition) {
+            // Remove any leading/trailing whitespace
+            let cleaned = definition.trim();
+            
+            // If the definition doesn't start with a diagram type, try to detect it
+            const diagramTypes = [
+                'graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 
+                'stateDiagram', 'pie', 'gantt', 'gitgraph', 'erDiagram',
+                'journey', 'timeline', 'mindmap', 'quadrantChart'
+            ];
+            
+            const hasType = diagramTypes.some(type => 
+                cleaned.toLowerCase().startsWith(type.toLowerCase())
+            );
+            
+            if (!hasType) {
+                // Default to flowchart if no type is specified
+                cleaned = 'graph TD\n' + cleaned;
+            }
+            
+            return cleaned;
+        }
+
+        function getErrorMessage(error) {
+            const errorStr = error.toString().toLowerCase();
+            
+            if (errorStr.includes('syntax') || errorStr.includes('parse')) {
+                return 'Syntax error in diagram. Check the syntax help panel.';
+            } else if (errorStr.includes('unknown') || errorStr.includes('unexpected')) {
+                return 'Unknown diagram type or syntax. Please check your Mermaid syntax.';
+            } else {
+                return 'Failed to render diagram. Please check your Mermaid syntax.';
+            }
+        }
+
+        function updateDiagramInfo(definition) {
+            const lines = definition.split('\n').length;
+            const type = detectDiagramType(definition);
+            const nodes = (definition.match(/\[.*?\]/g) || []).length;
+            
+            document.getElementById('diagramInfo').innerHTML = 
+                `<strong>File:</strong> ${currentFileName} | ` +
+                `<strong>Type:</strong> ${type} | ` +
+                `<strong>Lines:</strong> ${lines} | ` +
+                `<strong>Nodes:</strong> ${nodes}`;
+        }
+
+        function detectDiagramType(definition) {
+            const firstLine = definition.split('\n')[0].toLowerCase().trim();
+            
+            if (firstLine.includes('graph') || firstLine.includes('flowchart')) return 'Flowchart';
+            if (firstLine.includes('sequence')) return 'Sequence';
+            if (firstLine.includes('class')) return 'Class';
+            if (firstLine.includes('state')) return 'State';
+            if (firstLine.includes('pie')) return 'Pie Chart';
+            if (firstLine.includes('gantt')) return 'Gantt';
+            if (firstLine.includes('git')) return 'Git Graph';
+            if (firstLine.includes('er')) return 'ER Diagram';
+            if (firstLine.includes('journey')) return 'User Journey';
+            if (firstLine.includes('timeline')) return 'Timeline';
+            if (firstLine.includes('mindmap')) return 'Mind Map';
+            if (firstLine.includes('quadrant')) return 'Quadrant Chart';
+            
+            return 'Unknown';
+        }
+
+        function enableControls() {
+            document.getElementById('exportBtn').disabled = false;
+            document.getElementById('fullscreenBtn').disabled = false;
+            document.getElementById('zoomInBtn').disabled = false;
+            document.getElementById('zoomOutBtn').disabled = false;
+        }
+
+        // Theme switching
+        function setTheme(theme) {
+            currentTheme = theme;
+            
+            // Update active button
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.theme === theme) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Apply theme and re-render
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
+                    curve: 'basis'
+                },
+                securityLevel: 'loose'
+            });
+            
+            if (currentDiagram) {
+                loadDiagram(currentDiagram);
+            }
+            
+            showToast(`🎨 Applied ${theme} theme`);
+        }
+
+        // Setup interactions (reusing from original code)
+        function setupInteractions() {
+            const content = document.getElementById('diagramContent');
+
+            // Mouse events for dragging
+            content.addEventListener('mousedown', startDrag);
+            content.addEventListener('mousemove', drag);
+            content.addEventListener('mouseup', endDrag);
+            content.addEventListener('mouseleave', endDrag);
+
+            // Touch events for mobile
+            content.addEventListener('touchstart', startDrag);
+            content.addEventListener('touchmove', drag);
+            content.addEventListener('touchend', endDrag);
+
+            // Wheel event for zooming
+            content.addEventListener('wheel', zoom);
+
+            // Double-click to reset
+            content.addEventListener('dblclick', resetView);
+        }
+
+        // Dragging functions
+        function startDrag(e) {
+            if (!currentDiagram) return;
+            isDragging = true;
+            const event = e.touches ? e.touches[0] : e;
+            startX = event.clientX - translateX;
+            startY = event.clientY - translateY;
+            e.preventDefault();
+        }
+
+        function drag(e) {
+            if (!isDragging || !currentDiagram) return;
+            const event = e.touches ? e.touches[0] : e;
+            translateX = event.clientX - startX;
+            translateY = event.clientY - startY;
+            updateTransform();
+            e.preventDefault();
+        }
+
+        function endDrag() {
+            isDragging = false;
+        }
+
+        // Zoom function
+        function zoom(e) {
+            if (!currentDiagram) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            currentZoom *= delta;
+            currentZoom = Math.min(Math.max(currentZoom, 0.1), 3);
+            updateTransform();
+            updateZoomLevel();
+        }
+
+        // Update transform
+        function updateTransform() {
+            const diagram = document.getElementById('diagram');
+            diagram.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+        }
+
+        // Update zoom level display
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        // Control functions
+        function zoomIn() {
+            if (!currentDiagram) return;
+            currentZoom *= 1.2;
+            currentZoom = Math.min(currentZoom, 3);
+            updateTransform();
+            updateZoomLevel();
+        }
+
+        function zoomOut() {
+            if (!currentDiagram) return;
+            currentZoom *= 0.8;
+            currentZoom = Math.max(currentZoom, 0.1);
+            updateTransform();
+            updateZoomLevel();
+        }
+
+        function resetView() {
+            currentZoom = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+            updateZoomLevel();
+            showToast('🔄 View reset to default');
+        }
+
+        function toggleFullscreen() {
+            if (!currentDiagram) return;
+            const content = document.getElementById('diagramContent');
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                content.classList.add('fullscreen');
+                showToast('🔍 Fullscreen mode enabled');
+            } else {
+                content.classList.remove('fullscreen');
+                showToast('🔍 Fullscreen mode disabled');
+            }
+        }
+
+        function toggleSyntaxHelp() {
+            const panel = document.getElementById('syntaxPanel');
+            panel.classList.toggle('show');
+        }
+
+        function exportDiagram() {
+            if (!currentDiagram) return;
+            
+            const svg = document.querySelector('#diagram svg');
+            if (!svg) {
+                showToast('❌ No diagram found to export', 'error');
+                return;
+            }
+            
+            try {
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size based on SVG viewBox or default size
+                const viewBox = svg.getAttribute('viewBox');
+                let width = 1200, height = 800;
+                
+                if (viewBox) {
+                    const [x, y, w, h] = viewBox.split(' ').map(Number);
+                    width = w;
+                    height = h;
+                } else {
+                    const bbox = svg.getBoundingClientRect();
+                    width = bbox.width;
+                    height = bbox.height;
+                }
+                
+                canvas.width = width * 2; // Higher resolution
+                canvas.height = height * 2;
+                
+                // Convert SVG to string
+                const svgString = new XMLSerializer().serializeToString(svg);
+                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                const img = new Image();
+                img.onload = function() {
+                    // Set white background
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw the SVG image
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    const baseName = currentFileName.replace(/\.[^/.]+$/, "");
+                    link.download = `${baseName}-diagram.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    // Clean up
+                    URL.revokeObjectURL(url);
+                    showToast('📄 Diagram exported successfully!');
+                };
+                
+                img.onerror = function() {
+                    showToast('❌ Export failed - trying SVG export', 'error');
+                    exportDiagramAsSVG();
+                };
+                
+                img.src = url;
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showToast('❌ Export failed - trying SVG export', 'error');
+                exportDiagramAsSVG();
+            }
+        }
+
+        function exportDiagramAsSVG() {
+            try {
+                const svg = document.querySelector('#diagram svg');
+                if (!svg) return;
+                
+                const svgString = new XMLSerializer().serializeToString(svg);
+                const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                const baseName = currentFileName.replace(/\.[^/.]+$/, "");
+                link.download = `${baseName}-diagram.svg`;
+                link.href = url;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                showToast('📄 Diagram exported as SVG!');
+            } catch (error) {
+                console.error('SVG export error:', error);
+                showToast('❌ Export failed completely', 'error');
+            }
+        }
+
+        function showInfo() {
+            alert(`🎨 Interactive Mermaid Diagram Viewer
+
+📊 Features:
+• Load .mmd, .txt, or .md files with Mermaid syntax
+• Interactive zoom and pan controls
+• Multiple theme support (Default, Dark, Forest, Neutral)
+• Fullscreen viewing mode
+• Export diagrams as PNG or SVG
+• Drag & drop file support
+• Touch support for mobile devices
+• Syntax help panel
+
+🎯 Controls:
+• Click "Open MMD File" or drag & drop files
+• Click and drag to pan the diagram
+• Scroll wheel to zoom in/out
+• Double-click to reset view
+• Use toolbar buttons for quick actions
+
+📋 Supported Diagram Types:
+• Flowcharts & Graphs
+• Sequence Diagrams
+• Class Diagrams
+• State Diagrams
+• Pie Charts
+• Gantt Charts
+• ER Diagrams
+• User Journey Maps
+• Timelines
+• Mind Maps
+• And more!
+
+💡 Tips:
+• Files should contain valid Mermaid syntax
+• Visit mermaid.js.org for syntax documentation
+• Use the syntax help panel for quick reference
+
+Built with Mermaid.js v10.6.1`);
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            if (type === 'error') {
+                toast.classList.add('error');
+            }
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.classList.remove('error'), 300);
+            }, 4000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (isFullscreen) {
+                    toggleFullscreen();
+                } else {
+                    document.getElementById('syntaxPanel').classList.remove('show');
+                }
+            } else if (e.key === 'r' && e.ctrlKey) {
+                e.preventDefault();
+                resetView();
+            } else if (e.key === '=' && e.ctrlKey) {
+                e.preventDefault();
+                zoomIn();
+            } else if (e.key === '-' && e.ctrlKey) {
+                e.preventDefault();
+                zoomOut();
+            } else if (e.key === 'o' && e.ctrlKey) {
+                e.preventDefault();
+                fileInput.click();
+            } else if (e.key === 'F1') {
+                e.preventDefault();
+                toggleSyntaxHelp();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if there's a sample diagram in localStorage for demo
+            const sampleDiagram = `graph TD
+    A[🚀 Start] --> B{Make Decision}
+    B -->|Option 1| C[📊 Analyze Data]
+    B -->|Option 2| D[📝 Create Report]
+    C --> E[✅ Complete]
+    D --> E
+    
+    style A fill:#e1f5fe
+    style E fill:#e8f5e8
+    style B fill:#fff3e0`;
+    
+            // Show a demo message
+            setTimeout(() => {
+                showToast('💡 Drag & drop a .mmd file or click "Open MMD File" to get started!');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
